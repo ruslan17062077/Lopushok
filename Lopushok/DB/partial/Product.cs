@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Xml.Schema;
 
@@ -18,18 +19,37 @@ namespace Lopushok.DB
                 if (Image != null)
                 {
                     BitmapImage bitmapImage = new BitmapImage();
-                    MemoryStream byteStreame = new MemoryStream(Image);
-                    bitmapImage.BeginInit();
-                    bitmapImage.StreamSource = byteStreame;
-                    bitmapImage.EndInit();
+                    using (MemoryStream byteStream = new MemoryStream(Image))
+                    {
+                        bitmapImage.BeginInit();
+                        bitmapImage.StreamSource = byteStream;
+                        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmapImage.EndInit();
+                        bitmapImage.Freeze(); // Предотвращает ошибки доступа из других потоков
+                    }
                     return bitmapImage;
                 }
                 else
                 {
-                    return null;
+                    try
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.UriSource = new Uri("pack://application:,,,/Component/Images/picture.png", UriKind.Absolute);
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        return bitmap;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка загрузки изображения: {ex.Message}");
+                        return null;
+                    }
                 }
             }
         }
+
 
         public string Materials
         {
@@ -55,7 +75,33 @@ namespace Lopushok.DB
                         totalcost += (double)(item.Count * item.Material.Cost);
                     }
                 }
-                return totalcost;
+                if (totalcost != 0)
+                {
+                    return totalcost;
+                }
+                else
+                {
+                    return double.Parse(MinCostForAgent);
+                }
+            }
+        }
+        public SolidColorBrush BackgroundColor
+        {
+            get
+            {
+                if (ProductSale != null && ProductSale.Any())
+                {
+                    var lastSaleDate = ProductSale.Last().SaleDate;
+                    if (lastSaleDate.Month != DateTime.Now.Month || lastSaleDate.Year != DateTime.Now.Year)
+                    {
+                        return new SolidColorBrush(Colors.LightCoral); 
+                    }
+                }
+                else
+                {
+                    return new SolidColorBrush(Colors.LightCoral);
+                }
+                return new SolidColorBrush(Colors.White);
             }
         }
     }

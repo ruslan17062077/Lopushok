@@ -15,7 +15,7 @@ namespace Lopushok
     /// </summary>
     public partial class App : Application
     {
-        public static Lopuh422Entities2 db = new Lopuh422Entities2();
-      
+        public static LopuhEntities db = new LopuhEntities();
+        public static MainWindow main;
     }
 }
